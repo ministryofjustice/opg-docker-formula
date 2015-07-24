@@ -1,6 +1,6 @@
 /root/.dockercfg:
   file.managed:
-    - source: salt://opg-docker-compose/templates/dockercfg
+    - source: salt://docker/templates/dockercfg
     - mode: 0600
     - user: root
     - group: root
