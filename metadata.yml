@@ -1,2 +1,6 @@
+exports:
+- docker
+- docker-compose
+
 entry:
  - docker
