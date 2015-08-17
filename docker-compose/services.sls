@@ -9,8 +9,6 @@ include:
     - user: root
     - group: root
     - mode: 0755
-    - require:
-      - sls: docker-compose.install
 
 
 /etc/docker-compose/{{service_name}}/docker-compose.yml:
@@ -20,8 +18,6 @@ include:
     - user: root
     - group: root
     - mode: 644
-    - require:
-      - sls: docker-compose.install
 
 
 docker-compose-up-{{service_name}}:
@@ -46,8 +42,6 @@ docker-compose-up-{{service_name}}:
     - context:
         app_name: {{app_name}}
         service_name: {{service_name}}
-    - require:
-      - sls: docker-compose.install
 {% endif %}
 {% endfor %}
 

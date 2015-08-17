@@ -1,15 +1,30 @@
 import logging
+from salt.exceptions import CommandExecutionError
+from distutils.version import StrictVersion
 
 
 log = logging.getLogger(__name__)
 
 
+def version(cmd="docker-compose"):
+    """
+    :param cmd: path to docker-compose executable
+    :return: docker compose version or None if docker-compose is not available
+    """
+    fig_res = __salt__['cmd.run_all']("{} --version".format(cmd))
+    fig_output = fig_res['stdout']
+    for line in fig_output.splitlines():
+        if "docker-compose" in line and 'version' in line:
+            return line.split(" ")[-1]
+    return None
+
+
 def up(config, project=None, cmd="docker-compose", pull=True, env={}):
     """
-    runs `docker-compose up -d --x-smart-recreate`
+    runs `docker-compose up -d --no-recreate`
     if docker-compose complains that one needs to migrate from configs to tags
     then it will run `docker-compose migrate-to-labels`
-    and rerun `docker-compose up -d --x-smart-recreate`
+    and rerun `docker-compose up -d --no-recreate`
     :param config: path to docker-compose.yml file
     :param project: project name
     :param cmd: path to docker-compose executable
@@ -18,6 +33,9 @@ def up(config, project=None, cmd="docker-compose", pull=True, env={}):
     result = True
     changes = {}
     comment = []
+
+    if StrictVersion(version(cmd=cmd)) < StrictVersion('1.4.0'):
+        raise CommandExecutionError('docker-compose >= 1.4.0 is required')
 
     if project:
         project_option = "-p {}".format(project)
@@ -35,7 +53,7 @@ def up(config, project=None, cmd="docker-compose", pull=True, env={}):
             return result, changes, "Error running {}".format(cmd_line)
 
     # let's try up
-    cmd_line = "{cmd} -f {config} {project_option} up -d --x-smart-recreate".format(cmd=cmd, config=config, project_option=project_option)
+    cmd_line = "{cmd} -f {config} {project_option} up -d --no-recreate".format(cmd=cmd, config=config, project_option=project_option)
     log.info("executing docker-compose up")
 
     fig_res = __salt__['cmd.run_all']("{} ".format(cmd_line), env=env)
@@ -75,13 +93,16 @@ def up(config, project=None, cmd="docker-compose", pull=True, env={}):
             else:
                 comment.append(line)
 
-
     # just appending stderr to comment as error code is not set so this might be a warning
     if fig_res['stderr']:
         for line in fig_res['stderr'].splitlines():
             comment.append(line)
 
-    return result, changes, reduce(lambda x, y: x + y, comment)
+    if comment:
+        reduced_comment = reduce(lambda x, y: x + y, comment)
+    else:
+        reduced_comment = ""
+    return result, changes, reduced_comment
 
 
 def cmd(config, project=None, arg='', cmd="docker-compose"):
