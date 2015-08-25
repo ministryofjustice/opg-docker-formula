@@ -21,10 +21,10 @@ def version(cmd="docker-compose"):
 
 def up(config, project=None, cmd="docker-compose", pull=True, env={}):
     """
-    runs `docker-compose up -d --no-recreate`
+    runs `docker-compose up -d`
     if docker-compose complains that one needs to migrate from configs to tags
     then it will run `docker-compose migrate-to-labels`
-    and rerun `docker-compose up -d --no-recreate`
+    and rerun `docker-compose up -d`
     :param config: path to docker-compose.yml file
     :param project: project name
     :param cmd: path to docker-compose executable
@@ -53,7 +53,7 @@ def up(config, project=None, cmd="docker-compose", pull=True, env={}):
             return result, changes, "Error running {}".format(cmd_line)
 
     # let's try up
-    cmd_line = "{cmd} -f {config} {project_option} up -d --no-recreate".format(cmd=cmd, config=config, project_option=project_option)
+    cmd_line = "{cmd} -f {config} {project_option} up -d".format(cmd=cmd, config=config, project_option=project_option)
     log.info("executing docker-compose up")
 
     fig_res = __salt__['cmd.run_all']("{} ".format(cmd_line), env=env)
